@@ -546,7 +546,7 @@ class Module(LocalsDictNodeNG):
         """
         # set lookup name since this is necessary to infer on import nodes for
         # instance
-        context = contextmod.copy_context(context)
+        context = contextmod.copy_context(context, branch_path=False)
         context.lookupname = name
         try:
             return bases._infer_stmts(self.getattr(name, context), context, frame=self)
@@ -2106,9 +2106,7 @@ class ClassDef(mixins.FilterStmtsMixin, LocalsDictNodeNG, node_classes.Statement
             pass
 
         if dunder_call and dunder_call.qname() != "builtins.type.__call__":
-            # Call type.__call__ if not set metaclass
-            # (since type is the default metaclass)
-            context = contextmod.bind_context_to_node(context, self)
+            context = contextmod.bind_context_to_node(context, self, branch_path=False)
             yield from dunder_call.infer_call_result(caller, context)
         else:
             if any(cls.name in EXCEPTION_BASE_CLASSES for cls in self.mro()):
@@ -2434,7 +2432,7 @@ class ClassDef(mixins.FilterStmtsMixin, LocalsDictNodeNG, node_classes.Statement
         """
         # set lookup name since this is necessary to infer on import nodes for
         # instance
-        context = contextmod.copy_context(context)
+        context = contextmod.copy_context(context, branch_path=False)
         context.lookupname = name
         try:
             attr = self.getattr(name, context, class_context=class_context)[0]
@@ -2506,7 +2504,7 @@ class ClassDef(mixins.FilterStmtsMixin, LocalsDictNodeNG, node_classes.Statement
         method = methods[0]
 
         # Create a new callcontext for providing index as an argument.
-        new_context = contextmod.bind_context_to_node(context, self)
+        new_context = contextmod.bind_context_to_node(context, self, branch_path=False)
         new_context.callcontext = contextmod.CallContext(args=[index])
 
         try:
