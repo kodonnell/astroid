@@ -25,7 +25,7 @@ import astroid
 from astroid import exceptions
 from astroid import manager
 from astroid.tests import resources
-
+from astroid.tests.resources import TestCase
 
 BUILTINS = six.moves.builtins.__name__
 
@@ -41,7 +41,7 @@ def _get_file_from_object(obj):
 
 
 class AstroidManagerTest(
-    resources.SysPathSetup, resources.AstroidCacheSetupMixin, unittest.TestCase
+    resources.SysPathSetup, resources.AstroidCacheSetupMixin, TestCase
 ):
     def setUp(self):
         super(AstroidManagerTest, self).setUp()
@@ -287,7 +287,7 @@ class AstroidManagerTest(
         del self.manager._failed_import_hooks[0]
 
 
-class BorgAstroidManagerTC(unittest.TestCase):
+class BorgAstroidManagerTC(TestCase):
     def test_borg(self):
         """test that the AstroidManager is really a borg, i.e. that two different
         instances has same cache"""

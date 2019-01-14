@@ -8,6 +8,8 @@
 import unittest
 import contextlib
 
+from astroid.tests.resources import TestCase
+
 try:
     import numpy  # pylint: disable=unused-import
 
@@ -20,7 +22,7 @@ from astroid import nodes
 from astroid import node_classes
 
 
-class SubTestWrapper(unittest.TestCase):
+class SubTestWrapper(TestCase):
     """
     A class for supporting all unittest version wether or not subTest is available
     """
