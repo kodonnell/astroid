@@ -7,10 +7,25 @@
 # For details: https://github.com/PyCQA/astroid/blob/master/COPYING.LESSER
 
 """Various context related utilities, including inference and call contexts."""
-import contextlib
 import copy
 import pprint
 from typing import Optional
+
+import attr
+
+
+@attr.s(slots=True)
+class InferenceExecution:
+    RECURSION_LIMIT = 50
+
+    inferred = attr.ib(default=attr.Factory(set))
+    execution_counter = attr.ib(default=0)
+
+    def is_recursing(self):
+        return self.execution_counter > self.RECURSION_LIMIT
+
+    def increment(self):
+        self.execution_counter += 1
 
 
 class InferenceContext:
@@ -30,7 +45,7 @@ class InferenceContext:
     )
 
     def __init__(self, path=None, inferred=None):
-        self.path = path or set()
+        self.path = path or dict()
         """
         :type: set(tuple(NodeNG, optional(str)))
 
@@ -82,16 +97,26 @@ class InferenceContext:
         """Push node into inference path
 
         :return: True if node is already in context path else False
-        :rtype: bool
+        :rtype: :class:`ExecutionCounter`
 
         Allows one to see if the given node has already
-        been looked at for this inference context"""
+        been looked at for this inference context
+        """
         name = self.lookupname
-        if (node, name) in self.path:
-            return True
+        lookup = (id(node), id(self.boundnode), name)
+        execution = self.path.get(lookup)
+        if execution is not None:
+            return execution
 
-        self.path.add((node, name))
-        return False
+        self.path[lookup] = execution = InferenceExecution()
+        return execution
+
+    def clear(self):
+        self.path = {}
+        self.callcontext = None
+        self.boundnode = None
+        self.extra_context = {}
+        self.inferred = {}
 
     def clone(self, branch_path=True):
         """Clone inference path
@@ -128,11 +153,11 @@ class InferenceContext:
 
         self.inferred[key] = tuple(results)
 
-    @contextlib.contextmanager
-    def restore_path(self):
-        path = set(self.path)
-        yield
-        self.path = path
+    def get_node_key(self, node):
+        return node, self.lookupname, self.callcontext, self.boundnode
+
+    def get_cached(self, key):
+        return self.inferred.get(key)
 
     def __str__(self):
         state = (
