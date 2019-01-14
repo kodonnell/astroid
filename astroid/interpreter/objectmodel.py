@@ -110,7 +110,6 @@ class ObjectModel:
         It should return an AST or an interpreter object,
         but if the name is not found, then an AttributeInferenceError will be raised.
         """
-
         if name in self.attributes():
             return getattr(self, IMPL_PREFIX + name)
         raise exceptions.AttributeInferenceError(target=self._instance, attribute=name)
@@ -291,7 +290,7 @@ class FunctionModel(ObjectModel):
                 # is different.
                 return 0
 
-            def infer_call_result(self, caller, context=None):
+            def infer_call_result(self, caller, context=contextmod.global_context):
                 if len(caller.args) != 2:
                     raise exceptions.InferenceError(
                         "Invalid arguments for descriptor binding",
@@ -427,8 +426,8 @@ class ClassModel(ObjectModel):
         # Cls.mro is a method and we need to return one in order to have a proper inference.
         # The method we're returning is capable of inferring the underlying MRO though.
         class MroBoundMethod(bases.BoundMethod):
-            def infer_call_result(self, caller, context=None):
-                yield other_self.attr___mro__
+            def infer_call_result(self, caller, context=contextmod.global_context):
+                yield other_self.py__mro__
 
         implicit_metaclass = self._instance.implicit_metaclass()
         mro_method = implicit_metaclass.locals["mro"][0]
@@ -437,7 +436,7 @@ class ClassModel(ObjectModel):
     @property
     def attr___bases__(self):
         obj = node_classes.Tuple()
-        context = contextmod.InferenceContext()
+        context = contextmod.global_context
         elts = list(self._instance._inferred_bases(context))
         obj.postinit(elts=elts)
         return obj
@@ -475,7 +474,7 @@ class ClassModel(ObjectModel):
         obj.postinit(classes)
 
         class SubclassesBoundMethod(bases.BoundMethod):
-            def infer_call_result(self, caller, context=None):
+            def infer_call_result(self, caller, context=contextmod.global_context):
                 yield obj
 
         implicit_metaclass = self._instance.implicit_metaclass()
@@ -680,7 +679,7 @@ class DictModel(ObjectModel):
         """Generate a bound method that can infer the given *obj*."""
 
         class DictMethodBoundMethod(astroid.BoundMethod):
-            def infer_call_result(self, caller, context=None):
+            def infer_call_result(self, caller, context=contextmod.global_context):
                 yield obj
 
         meth = next(self._instance._proxied.igetattr(name))

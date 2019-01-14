@@ -24,6 +24,7 @@ from astroid import (
     MroError,
 )
 from astroid import arguments
+from astroid import context as contextmod
 from astroid.builder import AstroidBuilder
 from astroid import helpers
 from astroid import nodes
@@ -125,7 +126,7 @@ def register_builtin_transform(transform, builtin_name):
     an optional context.
     """
 
-    def _transform_wrapper(node, context=None):
+    def _transform_wrapper(node, context=contextmod.global_context):
         result = transform(node, context=context)
         if result:
             if not result.parent:
@@ -159,7 +160,7 @@ def _container_generic_inference(node, context, node_type, transform):
     if not transformed:
         try:
             inferred = next(arg.infer(context=context))
-        except (InferenceError, StopIteration):
+        except InferenceError:
             raise UseInferenceDefault()
         if inferred is util.Uninferable:
             raise UseInferenceDefault()
@@ -276,7 +277,7 @@ def _get_elts(arg, context):
     return items
 
 
-def infer_dict(node, context=None):
+def infer_dict(node, context=contextmod.global_context):
     """Try to infer a dict call to a Dict node.
 
     The function treats the following cases:
@@ -320,7 +321,7 @@ def infer_dict(node, context=None):
     return value
 
 
-def infer_super(node, context=None):
+def infer_super(node, context=contextmod.global_context):
     """Understand super calls.
 
     There are some restrictions for what can be understood:
@@ -401,7 +402,7 @@ def _infer_getattr_args(node, context):
     return obj, attr.value
 
 
-def infer_getattr(node, context=None):
+def infer_getattr(node, context=contextmod.global_context):
     """Understand getattr calls
 
     If one of the arguments is an Uninferable object, then the
@@ -429,7 +430,7 @@ def infer_getattr(node, context=None):
     raise UseInferenceDefault
 
 
-def infer_hasattr(node, context=None):
+def infer_hasattr(node, context=contextmod.global_context):
     """Understand hasattr calls
 
     This always guarantees three possible outcomes for calling
@@ -456,7 +457,7 @@ def infer_hasattr(node, context=None):
     return nodes.Const(True)
 
 
-def infer_callable(node, context=None):
+def infer_callable(node, context=contextmod.global_context):
     """Understand callable calls
 
     This follows Python's semantics, where an object
@@ -478,7 +479,7 @@ def infer_callable(node, context=None):
     return nodes.Const(inferred.callable())
 
 
-def infer_bool(node, context=None):
+def infer_bool(node, context=contextmod.global_context):
     """Understand bool calls."""
     if len(node.args) > 1:
         # Invalid bool call.
@@ -501,7 +502,7 @@ def infer_bool(node, context=None):
     return nodes.Const(bool_value)
 
 
-def infer_type(node, context=None):
+def infer_type(node, context=contextmod.global_context):
     """Understand the one-argument form of *type*."""
     if len(node.args) != 1:
         raise UseInferenceDefault
@@ -509,7 +510,7 @@ def infer_type(node, context=None):
     return helpers.object_type(node.args[0], context)
 
 
-def infer_slice(node, context=None):
+def infer_slice(node, context=contextmod.global_context):
     """Understand `slice` calls."""
     args = node.args
     if not 0 < len(args) <= 3:
@@ -536,7 +537,7 @@ def infer_slice(node, context=None):
     return slice_node
 
 
-def _infer_object__new__decorator(node, context=None):
+def _infer_object__new__decorator(node, context=contextmod.global_context):
     # Instantiate class immediately
     # since that's what @object.__new__ does
     return iter((node.instantiate_class(),))
@@ -557,7 +558,7 @@ def _infer_object__new__decorator_check(node):
     return False
 
 
-def infer_issubclass(callnode, context=None):
+def infer_issubclass(callnode, context=contextmod.global_context):
     """Infer issubclass() calls
 
     :param nodes.Call callnode: an `issubclass` call
@@ -602,7 +603,7 @@ def infer_issubclass(callnode, context=None):
     return nodes.Const(issubclass_bool)
 
 
-def infer_isinstance(callnode, context=None):
+def infer_isinstance(callnode, context=contextmod.global_context):
     """Infer isinstance calls
 
     :param nodes.Call callnode: an isinstance call
@@ -643,7 +644,7 @@ def infer_isinstance(callnode, context=None):
     return nodes.Const(isinstance_bool)
 
 
-def _class_or_tuple_to_container(node, context=None):
+def _class_or_tuple_to_container(node, context=contextmod.global_context):
     # Move inferences results into container
     # to simplify later logic
     # raises InferenceError if any of the inferences fall through
@@ -662,7 +663,7 @@ def _class_or_tuple_to_container(node, context=None):
     return class_container
 
 
-def infer_len(node, context=None):
+def infer_len(node, context=contextmod.global_context):
     """Infer length calls
 
     :param nodes.Call node: len call to infer
@@ -684,7 +685,7 @@ def infer_len(node, context=None):
         raise UseInferenceDefault(str(exc)) from exc
 
 
-def infer_str(node, context=None):
+def infer_str(node, context=contextmod.global_context):
     """Infer str() calls
 
     :param nodes.Call node: str() call to infer
@@ -700,7 +701,7 @@ def infer_str(node, context=None):
         raise UseInferenceDefault(str(exc)) from exc
 
 
-def infer_int(node, context=None):
+def infer_int(node, context=contextmod.global_context):
     """Infer int() calls
 
     :param nodes.Call node: int() call to infer
@@ -732,7 +733,7 @@ def infer_int(node, context=None):
     return nodes.Const(0)
 
 
-def infer_dict_fromkeys(node, context=None):
+def infer_dict_fromkeys(node, context=contextmod.global_context):
     """Infer dict.fromkeys
 
     :param nodes.Call node: dict.fromkeys() call to infer
