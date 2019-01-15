@@ -261,7 +261,8 @@ class PartialFunction(scoped_nodes.FunctionDef):
         self.filled_keywords = call.keyword_arguments
 
     def infer_call_result(self, caller=None, context=None):
-        if context:
+        context = contextmod.copy_context(context, branch_path=False)
+        if context and context.callcontext:
             current_passed_keywords = {
                 keyword for (keyword, _) in context.callcontext.keywords
             }
