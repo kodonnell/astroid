@@ -7,6 +7,7 @@
 # For details: https://github.com/PyCQA/astroid/blob/master/COPYING.LESSER
 
 """Various context related utilities, including inference and call contexts."""
+import contextlib
 import copy
 import pprint
 from typing import Optional
@@ -158,6 +159,12 @@ class InferenceContext:
 
     def get_cached(self, key):
         return self.inferred.get(key)
+
+    @contextlib.contextmanager
+    def restore_path(self):
+        path = dict(self.path)
+        yield
+        self.path = path
 
     def __str__(self):
         state = (

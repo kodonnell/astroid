@@ -427,7 +427,7 @@ class ClassModel(ObjectModel):
         # The method we're returning is capable of inferring the underlying MRO though.
         class MroBoundMethod(bases.BoundMethod):
             def infer_call_result(self, caller, context=contextmod.global_context):
-                yield other_self.py__mro__
+                yield other_self.attr___mro__
 
         implicit_metaclass = self._instance.implicit_metaclass()
         mro_method = implicit_metaclass.locals["mro"][0]
